@@ -74,6 +74,8 @@ client.on("messageCreate", async message => {
   }
 
   try {
+    console.log("VOICE CHANNEL:", voiceChannel.name);
+console.log("VOICE ID:", voiceChannel.id);
     await distube.play(voiceChannel, query, {
       textChannel: message.channel,
       member: message.member
