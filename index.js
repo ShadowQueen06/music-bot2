@@ -18,10 +18,10 @@ const PREFIX = "2P";
 client.lavalink = new LavalinkManager({
   nodes: [
     {
-      id: "main",
+      authorization: process.env.LAVALINK_PASSWORD,
       host: process.env.LAVALINK_HOST,
       port: Number(process.env.LAVALINK_PORT),
-      authorization: process.env.LAVALINK_PASSWORD,
+      id: "main",
       secure: process.env.LAVALINK_SECURE === "true"
     }
   ],
@@ -29,6 +29,7 @@ client.lavalink = new LavalinkManager({
     const guild = client.guilds.cache.get(guildId);
     if (guild) guild.shard.send(payload);
   },
+  autoSkip: true,
   client: {
     id: process.env.CLIENT_ID,
     username: "mo-tabie"
