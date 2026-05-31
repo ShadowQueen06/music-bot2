@@ -18,10 +18,10 @@ const PREFIX = "2P";
 client.lavalink = new LavalinkManager({
   nodes: [
     {
-      authorization: process.env.LAVALINK_PASSWORD,
+      id: "main",
       host: process.env.LAVALINK_HOST,
       port: Number(process.env.LAVALINK_PORT),
-      id: "main",
+      authorization: process.env.LAVALINK_PASSWORD,
       secure: process.env.LAVALINK_SECURE === "true"
     }
   ],
@@ -107,23 +107,26 @@ client.on("messageCreate", async message => {
 
     const result = await player.search(
       {
-        query: query,
-        source: "ytsearch"
+        query: `ytsearch:${query}`
       },
       message.author
     );
 
-    if (!result.tracks.length) {
+    console.log(result);
+
+    if (!result || !result.tracks || result.tracks.length === 0) {
       return message.reply("I couldn't find that song.");
     }
 
-    await player.queue.add(result.tracks[0]);
+    const track = result.tracks[0];
+
+    await player.queue.add(track);
 
     if (!player.playing) {
       await player.play();
     }
 
-    message.reply(`Playing: ${result.tracks[0].info.title}`);
+    message.reply(`Playing: ${track.info.title}`);
   } catch (error) {
     console.error(error);
     message.reply("Music error. Lavalink could not play this song.");
