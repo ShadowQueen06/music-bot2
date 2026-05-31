@@ -128,7 +128,6 @@ if (!player.playing) {
   await player.play();
 }
 
-message.reply(`Playing: ${track.info.title}`);
   } catch (error) {
     console.error(error);
     message.reply("Music error. Lavalink could not play this song.");
