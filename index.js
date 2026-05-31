@@ -43,18 +43,6 @@ client.once("ready", async () => {
     id: client.user.id,
     username: client.user.username
   });
-
-  client.lavalink.on("nodeConnect", node => {
-    console.log("LAVALINK CONNECTED:", node.id);
-  });
-
-  client.lavalink.on("nodeDisconnect", (node, reason) => {
-    console.log("LAVALINK DISCONNECTED:", reason);
-  });
-
-  client.lavalink.on("nodeError", (node, error) => {
-    console.error("LAVALINK ERROR:", error);
-  });
 });
 
 client.on("raw", data => {
@@ -117,9 +105,11 @@ client.on("messageCreate", async message => {
 
     await player.connect();
 
+    const isUrl = query.startsWith("http://") || query.startsWith("https://");
+
     const result = await player.search(
       {
-        query: `ytsearch:${query}`
+        query: isUrl ? query : `ytmsearch:${query}`
       },
       message.author
     );
@@ -133,13 +123,11 @@ client.on("messageCreate", async message => {
     const track = result.tracks[0];
 
     await player.queue.add(track);
+    await player.setVolume(100);
 
-await player.setVolume(100);
-
-if (!player.playing) {
-  await player.play();
-}
-
+    if (!player.playing) {
+      await player.play();
+    }
   } catch (error) {
     console.error(error);
     message.reply("Music error. Lavalink could not play this song.");
@@ -157,6 +145,10 @@ client.lavalink.on("queueEnd", player => {
 
 client.lavalink.on("nodeConnect", node => {
   console.log(`Lavalink connected: ${node.id}`);
+});
+
+client.lavalink.on("nodeDisconnect", (node, reason) => {
+  console.log("Lavalink disconnected:", reason);
 });
 
 client.lavalink.on("nodeError", (node, error) => {
