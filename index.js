@@ -122,11 +122,13 @@ client.on("messageCreate", async message => {
 
     await player.queue.add(track);
 
-    if (!player.playing) {
-      await player.play();
-    }
+await player.setVolume(100);
 
-    message.reply(`Playing: ${track.info.title}`);
+if (!player.playing) {
+  await player.play();
+}
+
+message.reply(`Playing: ${track.info.title}`);
   } catch (error) {
     console.error(error);
     message.reply("Music error. Lavalink could not play this song.");
