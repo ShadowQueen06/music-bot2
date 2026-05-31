@@ -116,9 +116,10 @@ client.on("messageCreate", async message => {
 
     console.log(result);
 
-    if (!result || !result.tracks || result.tracks.length === 0) {
-      return message.reply("I couldn't find that song.");
-    }
+   if (!result || !result.tracks || result.tracks.length === 0) {
+  console.log("NO TRACKS FOUND");
+  return;
+}
 
     const track = result.tracks[0];
 
