@@ -43,6 +43,18 @@ client.once("ready", async () => {
     id: client.user.id,
     username: client.user.username
   });
+
+  client.lavalink.on("nodeConnect", node => {
+    console.log("LAVALINK CONNECTED:", node.id);
+  });
+
+  client.lavalink.on("nodeDisconnect", (node, reason) => {
+    console.log("LAVALINK DISCONNECTED:", reason);
+  });
+
+  client.lavalink.on("nodeError", (node, error) => {
+    console.error("LAVALINK ERROR:", error);
+  });
 });
 
 client.on("raw", data => {
