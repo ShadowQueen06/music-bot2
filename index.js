@@ -1,8 +1,7 @@
 require("dotenv").config();
 
 const { Client, GatewayIntentBits, PermissionsBitField } = require("discord.js");
-const { DisTube } = require("distube");
-const { YtDlpPlugin } = require("@distube/yt-dlp");
+const { LavalinkManager } = require("lavalink-client");
 
 const client = new Client({
   intents: [
@@ -14,15 +13,39 @@ const client = new Client({
   ]
 });
 
-const distube = new DisTube(client, {
-  plugins: [new YtDlpPlugin()],
-  emitNewSongOnly: true
-});
-
 const PREFIX = "2P";
 
-client.once("ready", () => {
+client.lavalink = new LavalinkManager({
+  nodes: [
+    {
+      id: "main",
+      host: process.env.LAVALINK_HOST,
+      port: Number(process.env.LAVALINK_PORT),
+      authorization: process.env.LAVALINK_PASSWORD,
+      secure: process.env.LAVALINK_SECURE === "true"
+    }
+  ],
+  sendToShard: (guildId, payload) => {
+    const guild = client.guilds.cache.get(guildId);
+    if (guild) guild.shard.send(payload);
+  },
+  client: {
+    id: process.env.CLIENT_ID,
+    username: "mo-tabie"
+  }
+});
+
+client.once("ready", async () => {
   console.log(`Logged in as ${client.user.tag}`);
+
+  client.lavalink.init({
+    id: client.user.id,
+    username: client.user.username
+  });
+});
+
+client.on("raw", data => {
+  client.lavalink.sendRawData(data);
 });
 
 client.on("guildMemberAdd", member => {
@@ -34,8 +57,6 @@ client.on("guildMemberAdd", member => {
 
 client.on("messageCreate", async message => {
   if (message.author.bot) return;
-
-  console.log("MESSAGE:", message.content);
 
   const content = message.content.trim();
 
@@ -51,22 +72,12 @@ client.on("messageCreate", async message => {
     }
 
     try {
-
-  console.log("VOICE CHANNEL:", voiceChannel.name);
-  console.log("VOICE ID:", voiceChannel.id);
-  console.log("STARTING PLAY...");
-
-  await distube.play(voiceChannel, query, {
-    textChannel: message.channel,
-    member: message.member
-  });
-
-  console.log("PLAY COMMAND SENT");
-
-} catch (error) {
-  console.error(error);
-  message.reply("Something went wrong while playing the song.");
-}
+      await client.user.setAvatar(imageUrl);
+      return message.reply("Bot profile picture updated.");
+    } catch (error) {
+      console.error(error);
+      return message.reply("Invalid image URL or Discord blocked the change.");
+    }
   }
 
   if (!content.startsWith(PREFIX)) return;
@@ -84,28 +95,55 @@ client.on("messageCreate", async message => {
   }
 
   try {
-    console.log("VOICE CHANNEL:", voiceChannel.name);
-console.log("VOICE ID:", voiceChannel.id);
-    await distube.play(voiceChannel, query, {
-      textChannel: message.channel,
-      member: message.member
+    const player = client.lavalink.createPlayer({
+      guildId: message.guild.id,
+      voiceChannelId: voiceChannel.id,
+      textChannelId: message.channel.id,
+      selfDeaf: true
     });
+
+    await player.connect();
+
+    const result = await player.search(
+      {
+        query: query,
+        source: "ytsearch"
+      },
+      message.author
+    );
+
+    if (!result.tracks.length) {
+      return message.reply("I couldn't find that song.");
+    }
+
+    await player.queue.add(result.tracks[0]);
+
+    if (!player.playing) {
+      await player.play();
+    }
+
+    message.reply(`Playing: ${result.tracks[0].info.title}`);
   } catch (error) {
     console.error(error);
-    message.reply("Something went wrong while playing the song.");
+    message.reply("Music error. Lavalink could not play this song.");
   }
 });
 
-distube
-  .on("playSong", (queue, song) => {
-    queue.textChannel.send(`Playing: ${song.name}`);
-  })
-  .on("addSong", (queue, song) => {
-    queue.textChannel.send(`Added: ${song.name}`);
-  })
-  .on("error", (channel, error) => {
-    console.error(error);
-    if (channel) channel.send("Music error. Try another song or link.");
-  });
+client.lavalink.on("trackStart", (player, track) => {
+  const channel = client.channels.cache.get(player.textChannelId);
+  if (channel) channel.send(`Now playing: ${track.info.title}`);
+});
+
+client.lavalink.on("queueEnd", player => {
+  player.destroy();
+});
+
+client.lavalink.on("nodeConnect", node => {
+  console.log(`Lavalink connected: ${node.id}`);
+});
+
+client.lavalink.on("nodeError", (node, error) => {
+  console.error(`Lavalink node error: ${node.id}`, error);
+});
 
 client.login(process.env.TOKEN);
