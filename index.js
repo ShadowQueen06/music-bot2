@@ -51,12 +51,22 @@ client.on("messageCreate", async message => {
     }
 
     try {
-      await client.user.setAvatar(imageUrl);
-      return message.reply("Bot profile picture updated.");
-    } catch (error) {
-      console.error(error);
-      return message.reply("Invalid image URL or Discord blocked the change.");
-    }
+
+  console.log("VOICE CHANNEL:", voiceChannel.name);
+  console.log("VOICE ID:", voiceChannel.id);
+  console.log("STARTING PLAY...");
+
+  await distube.play(voiceChannel, query, {
+    textChannel: message.channel,
+    member: message.member
+  });
+
+  console.log("PLAY COMMAND SENT");
+
+} catch (error) {
+  console.error(error);
+  message.reply("Something went wrong while playing the song.");
+}
   }
 
   if (!content.startsWith(PREFIX)) return;
