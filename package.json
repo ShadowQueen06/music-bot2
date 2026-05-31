@@ -8,7 +8,8 @@
   "dependencies": {
     "discord.js": "^14.15.3",
     "@discordjs/voice": "^0.17.0",
-    "play-dl": "^1.9.7",
+    "distube": "^5.0.4",
+    "@distube/yt-dlp": "^2.0.1",
     "dotenv": "^16.4.5"
   }
 }
