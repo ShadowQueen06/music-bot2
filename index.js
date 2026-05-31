@@ -40,6 +40,7 @@ client.on("guildMemberAdd", member => {
 });
 
 client.on("messageCreate", async message => {
+  console.log("MESSAGE:", message.content);
   if (message.author.bot) return;
 
   const content = message.content.trim();
